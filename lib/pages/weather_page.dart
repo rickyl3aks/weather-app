@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:lottie/lottie.dart";
 import "../models/weather_model.dart";
 import "../services/weather_service.dart";
+import 'package:google_fonts/google_fonts.dart';
 import "../api/api_key.dart";
 
 class WeatherPage extends StatefulWidget {
@@ -79,34 +80,63 @@ class _WeatherPageState extends State<WeatherPage> {
             children: [
               Text(
                 _weather?.cityName ?? "Loading city...",
-                style: const TextStyle(
-                  fontSize: 20,
-                ),
+                style:
+                    const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
               ),
-              if (_weather?.cityName != null)
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
-                ),
-              Text(_weather?.mainCondition ?? ""),
-              Text(
-                '${_weather?.temperature.round()}°C',
-                style: const TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
+              SizedBox(
+                width: 200,
+                height: 200,
+                child:
+                    Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
               ),
+              Container(
+                height: 300,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      offset: const Offset(
+                        5,
+                        5,
+                      ),
+                      blurRadius: 10,
+                      spreadRadius: 0.5,
+                      color: Colors.amber.shade100,
+                    )
+                  ],
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DefaultTextStyle(
+                  style: GoogleFonts.robotoCondensed(color: Colors.black),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    Text(
+                    _weather?.mainCondition ?? "",
+                    style: const TextStyle(
+                      fontSize: 25,
+                    ),
+                  ),
+                    Text(
+                      '${_weather?.temperature.round()}°C',
+                      style: const TextStyle(
+                        fontSize: 40,
+                      ),)
+                    ],
+                  )
+                ),
+              )
             ],
           ),
         ),
       );
     } else {
       return const Scaffold(
-        body:  Center(
-          child:  Text(
+        body: Center(
+          child: Text(
             "Loading city...",
-            style:  TextStyle(
+            style: TextStyle(
               fontSize: 20,
             ),
           ),
