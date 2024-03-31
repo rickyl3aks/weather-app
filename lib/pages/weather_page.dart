@@ -1,8 +1,10 @@
+import "dart:async";
 import "package:flutter/material.dart";
 import "package:lottie/lottie.dart";
 import "../models/weather_model.dart";
 import "../services/weather_service.dart";
 import 'package:google_fonts/google_fonts.dart';
+import "../format_date/date.dart";
 import "../api/api_key.dart";
 
 class WeatherPage extends StatefulWidget {
@@ -65,9 +67,21 @@ class _WeatherPageState extends State<WeatherPage> {
   @override
   void initState() {
     super.initState();
-
-    // fetch weather on startup
     _fetchWeather();
+    // fetch weather
+    Timer.periodic(const Duration(hours: 1), (timer) {
+      _fetchWeather();
+    });
+    updateTime();
+    Timer.periodic(const Duration(seconds: 50), (timer) {
+      updateTime();
+    });
+  }
+
+  void updateTime() {
+    setState(() {
+      time = clock.format(DateTime.now());
+    });
   }
 
   @override
@@ -83,6 +97,11 @@ class _WeatherPageState extends State<WeatherPage> {
                 style:
                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
               ),
+              Text(
+                date.toString(),
+                style: const TextStyle(fontSize: 20),
+              ),
+              Text(time.toString(), style: const TextStyle(fontSize: 30)),
               SizedBox(
                 width: 200,
                 height: 200,
@@ -90,6 +109,7 @@ class _WeatherPageState extends State<WeatherPage> {
                     Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
               ),
               Container(
+                margin: const EdgeInsets.all(50),
                 height: 300,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -108,38 +128,33 @@ class _WeatherPageState extends State<WeatherPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: DefaultTextStyle(
-                  style: GoogleFonts.robotoCondensed(color: Colors.black),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Text(
-                    _weather?.mainCondition ?? "",
-                    style: const TextStyle(
-                      fontSize: 25,
-                    ),
-                  ),
-                    Text(
-                      '${_weather?.temperature.round()}°C',
-                      style: const TextStyle(
-                        fontSize: 40,
-                      ),)
-                    ],
-                  )
-                ),
+                    style: GoogleFonts.robotoCondensed(color: Colors.black),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _weather?.mainCondition ?? "",
+                          style: const TextStyle(
+                            fontSize: 25,
+                          ),
+                        ),
+                        Text(
+                          '${_weather?.temperature.round()}°C',
+                          style: const TextStyle(
+                            fontSize: 40,
+                          ),
+                        )
+                      ],
+                    )),
               )
             ],
           ),
         ),
       );
     } else {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text(
-            "Loading city...",
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
+          child: Lottie.asset("assets/loading.json"),
         ),
       );
     }
