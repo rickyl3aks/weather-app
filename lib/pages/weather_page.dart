@@ -1,10 +1,11 @@
 import "dart:async";
 import "package:flutter/material.dart";
+import "../UI/weather_info.dart";
 import "package:lottie/lottie.dart";
 import "../models/weather_model.dart";
 import "../services/weather_service.dart";
-import 'package:google_fonts/google_fonts.dart';
 import "../format_date/date.dart";
+import "../wave/wave.dart";
 import "../api/api_key.dart";
 
 class WeatherPage extends StatefulWidget {
@@ -16,32 +17,40 @@ class WeatherPage extends StatefulWidget {
 
 class _WeatherPageState extends State<WeatherPage> {
   // api key
-  final _weatherService = WeatherService(weatherApiKey);
+  final _weatherService = WeatherService(weatherApiKey, "weather");
   Weather? _weather;
+  AirPollution? _pollution;
 
   //fetch weather
   _fetchWeather() async {
     // get the current city
-    String cityName = await _weatherService.getCurrentCity();
+    Map<String, dynamic> cityData = await _weatherService.getCurrentCity();
+    String cityName = cityData['city'];
+    double latitude = cityData["latitude"];
+    double longitude = cityData["longitude"];
 
-    //get weather for city
     try {
       final weather = await _weatherService.getWeather(cityName);
       setState(() {
         _weather = weather;
       });
-    }
-
-    // any errors
-    catch (e) {
-      print(e);
+      final airPollutionService = WeatherService(weatherApiKey, "air_pollution",
+          latitude: latitude, longitude: longitude);
+      final airPollution = await airPollutionService.getPollution();
+      setState(() {
+        _pollution = airPollution;
+      });
+    } catch (error) {
+      print(error);
     }
   }
 
   //weather animations
-  String getWeatherAnimation(String? mainCondition) {
-    if (mainCondition == null) return "assets/sunny.json";
-
+  String getWeatherAnimation(String? mainCondition, time) {
+    if (mainCondition == null) return "assets/day/sunny.json";
+    if (time == null) return "assets/day/sunny.json";
+    int hour = int.parse(time.split(':')[0]);
+    String cycle = (hour >= 5 && hour < 18) ? "day" : "night";
     switch (mainCondition.toLowerCase()) {
       case "clouds":
       case "mist":
@@ -49,18 +58,45 @@ class _WeatherPageState extends State<WeatherPage> {
       case "haze":
       case "dust":
       case "fog":
-        return "assets/cloud.json";
+        return "assets/$cycle/cloud.json";
       case "rain":
       case "drizzle":
       case "shower rain":
-        return "assets/rain.json";
+        return "assets/$cycle/rain.json";
       case "thunderstorm":
-        return "assets/thunder.json";
+        return "assets/$cycle/thunder.json";
       case "clear":
-        return "assets/sunny.json";
+        return "assets/$cycle/sunny.json";
       default:
-        return "assets/sunny.json";
+        return "assets/$cycle/sunny.json";
     }
+  }
+
+  String getPollutionResult(int? pollutionIdx) {
+    if (pollutionIdx == null) return "no data";
+    String score;
+
+    switch (pollutionIdx) {
+      case 5:
+        score = "Very Poor";
+        break;
+      case 4:
+        score = "Poor";
+        break;
+      case 3:
+        score = "Moderate";
+        break;
+      case 2:
+        score = "Fair";
+        break;
+      case 1:
+        score = "Good";
+        break;
+      default:
+        score = "no data";
+        break;
+    }
+    return score;
   }
 
   // init state
@@ -88,12 +124,21 @@ class _WeatherPageState extends State<WeatherPage> {
   Widget build(BuildContext context) {
     if (_weather?.cityName != null) {
       return Scaffold(
-        body: Center(
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.amberAccent, Colors.lightBlueAccent],
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                _weather?.cityName ?? "Loading city...",
+                "${(_weather?.cityName).toString()}, ${(_weather?.country).toString()}",
                 style:
                     const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
               ),
@@ -101,60 +146,40 @@ class _WeatherPageState extends State<WeatherPage> {
                 date.toString(),
                 style: const TextStyle(fontSize: 20),
               ),
-              Text(time.toString(), style: const TextStyle(fontSize: 30)),
+              Text(
+                time.toString(),
+                style: const TextStyle(fontSize: 30),
+              ),
               SizedBox(
                 width: 200,
                 height: 200,
-                child:
-                    Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
-              ),
-              Container(
-                margin: const EdgeInsets.all(50),
-                height: 300,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      offset: const Offset(
-                        5,
-                        5,
-                      ),
-                      blurRadius: 10,
-                      spreadRadius: 0.5,
-                      color: Colors.amber.shade100,
-                    )
-                  ],
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(10),
+                child: Lottie.asset(
+                  getWeatherAnimation(_weather?.mainCondition, time.toString()),
                 ),
-                child: DefaultTextStyle(
-                    style: GoogleFonts.robotoCondensed(color: Colors.black),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _weather?.mainCondition ?? "",
-                          style: const TextStyle(
-                            fontSize: 25,
-                          ),
-                        ),
-                        Text(
-                          '${_weather?.temperature.round()}°C',
-                          style: const TextStyle(
-                            fontSize: 40,
-                          ),
-                        )
-                      ],
-                    )),
-              )
+              ),
+              WeatherInfoWidget(
+                mainCondition: _weather?.mainCondition ?? "",
+                temperature: _weather?.temperature ?? 0,
+                pollutionIndex:
+                    getPollutionResult(_pollution?.indexPollution) ?? "",
+              ),
             ],
           ),
         ),
       );
     } else {
       return Scaffold(
-        body: Center(
-          child: Lottie.asset("assets/loading.json"),
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.blueAccent, Colors.lightBlueAccent],
+            ),
+          ),
+          child: Lottie.asset("assets/loading/loading.json"),
         ),
       );
     }
