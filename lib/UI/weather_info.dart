@@ -69,7 +69,7 @@ class WeatherInfoWidget extends StatelessWidget {
                   ),
                 ),
                 const Text(
-                  "Air quality ",
+                  "Air quality",
                   style: TextStyle(fontSize: 25),
                 ),
               ],

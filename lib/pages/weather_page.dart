@@ -5,7 +5,6 @@ import "package:lottie/lottie.dart";
 import "../models/weather_model.dart";
 import "../services/weather_service.dart";
 import "../format_date/date.dart";
-import "../wave/wave.dart";
 import "../api/api_key.dart";
 
 class WeatherPage extends StatefulWidget {
@@ -73,7 +72,7 @@ class _WeatherPageState extends State<WeatherPage> {
   }
 
   String getPollutionResult(int? pollutionIdx) {
-    if (pollutionIdx == null) return "no data";
+    if (pollutionIdx == null) return "good";
     String score;
 
     switch (pollutionIdx) {
@@ -93,8 +92,7 @@ class _WeatherPageState extends State<WeatherPage> {
         score = "Good";
         break;
       default:
-        score = "no data";
-        break;
+        score = "Good";
     }
     return score;
   }
