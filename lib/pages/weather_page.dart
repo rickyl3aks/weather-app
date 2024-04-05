@@ -159,7 +159,7 @@ class _WeatherPageState extends State<WeatherPage> {
                 mainCondition: _weather?.mainCondition ?? "",
                 temperature: _weather?.temperature ?? 0,
                 pollutionIndex:
-                    getPollutionResult(_pollution?.indexPollution) ?? "",
+                    getPollutionResult(_pollution?.indexPollution),
               ),
             ],
           ),
